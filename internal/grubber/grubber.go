@@ -9,7 +9,7 @@ import (
 )
 
 type RemoteIP struct {
-	Addr string
+	IpAddr string `json:"ip_address"`
 }
 
 func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
@@ -20,13 +20,13 @@ func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
 		netIP := net.ParseIP(splitIps[len(splitIps)-1]) // last if from proxy
 		if netIP != nil {
 			return RemoteIP{
-				Addr: netIP.String(),
+				IpAddr: netIP.String(),
 			}, nil
 		}
 	}
 
 	none := RemoteIP{
-		Addr: "",
+		IpAddr: "",
 	}
 
 	remoteIp, _, err := net.SplitHostPort(c.Request.RemoteAddr)
@@ -38,11 +38,11 @@ func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
 	if netIP != nil {
 		if remoteIp == "::1" {
 			return RemoteIP{
-				Addr: "127.0.0.1",
+				IpAddr: "127.0.0.1",
 			}, nil
 		}
 		return RemoteIP{
-			Addr: remoteIp,
+			IpAddr: remoteIp,
 		}, nil
 	}
 
