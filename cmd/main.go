@@ -9,7 +9,11 @@ import (
 func main() {
 	r := gin.Default()
 
+	r.LoadHTMLGlob("templates/*")
+
+	r.GET("/", controllers.Root)
+	r.GET("/address", controllers.Address)
 	r.GET("/ip", controllers.GetIP)
 
-	r.Run(":8080")
+	r.Run(":8000")
 }
