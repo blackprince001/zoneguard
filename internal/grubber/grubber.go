@@ -12,6 +12,10 @@ type RemoteIP struct {
 	IpAddr string `json:"ip_address"`
 }
 
+var EmptyIP RemoteIP = RemoteIP{
+	IpAddr: "",
+}
+
 func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
 	ips := c.Request.Header.Get("X-Forwarded-For")
 	splitIps := strings.Split(ips, ",")
@@ -25,13 +29,33 @@ func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
 		}
 	}
 
-	none := RemoteIP{
-		IpAddr: "",
+	// Check if any of these headers are contained in the request.
+	headers := c.Request.Header
+
+	if len(headers) > 0 {
+		checklist := []string{
+			"x-client-ip",         // Standard headers used by Amazon EC2, Heroku, and others.
+			"cf-connecting-ip",    // Cloudflare
+			"fastly-client-ip",    // Fastly and Firebase 
+			"true-client-ip",      // Akamai and Cloudflare 
+			"x-real-ip",           // Default nginx proxy/fcgi
+			"x-cluster-client-ip", // (Rackspace LB and Riverbed's Stingray)
+			"x-forwarded",
+			"forwarded-for",
+			"forwarded",
+		}
+
+		for _, h := range checklist {
+			if ip := c.Request.Header.Get(h); net.ParseIP(ip) != nil {
+				return RemoteIP{IpAddr: ip,}, nil
+			}
+		}
 	}
 
+	// if IP is not in headers, take from logs
 	remoteIp, _, err := net.SplitHostPort(c.Request.RemoteAddr)
 	if err != nil {
-		return none, err
+		return EmptyIP, err
 	}
 
 	netIP := net.ParseIP(remoteIp)
@@ -46,5 +70,5 @@ func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
 		}, nil
 	}
 
-	return none, errors.New("IP not found")
+	return EmptyIP, errors.New("IP not found")
 }
