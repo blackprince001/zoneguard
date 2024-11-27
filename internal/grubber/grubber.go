@@ -36,8 +36,8 @@ func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
 		checklist := []string{
 			"x-client-ip",         // Standard headers used by Amazon EC2, Heroku, and others.
 			"cf-connecting-ip",    // Cloudflare
-			"fastly-client-ip",    // Fastly and Firebase 
-			"true-client-ip",      // Akamai and Cloudflare 
+			"fastly-client-ip",    // Fastly and Firebase
+			"true-client-ip",      // Akamai and Cloudflare
 			"x-real-ip",           // Default nginx proxy/fcgi
 			"x-cluster-client-ip", // (Rackspace LB and Riverbed's Stingray)
 			"x-forwarded",
@@ -47,12 +47,11 @@ func GetRemoteIP(c *gin.Context) (RemoteIP, error) {
 
 		for _, h := range checklist {
 			if ip := c.Request.Header.Get(h); net.ParseIP(ip) != nil {
-				return RemoteIP{IpAddr: ip,}, nil
+				return RemoteIP{IpAddr: ip}, nil
 			}
 		}
 	}
 
-	// if IP is not in headers, take from logs
 	remoteIp, _, err := net.SplitHostPort(c.Request.RemoteAddr)
 	if err != nil {
 		return EmptyIP, err
