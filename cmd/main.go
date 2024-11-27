@@ -10,7 +10,6 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	controllers "zoneguard/internal/controllers"
 	"zoneguard/internal/database"
 )
 
@@ -22,6 +21,9 @@ func main() {
 
 	db.AutoMigrate(&database.Iplocator{})
 
+	geoLocatorRepo := database.NewIplocatorRepo(db)
+	routes_handler := NewRoutesHandler(geoLocatorRepo)
+
 	csv_file := filepath.Join(".", "data.csv")
 
 	err = database.CSVtoSqlite(db, csv_file)
@@ -30,12 +32,11 @@ func main() {
 	}
 
 	r := gin.Default()
-
 	r.LoadHTMLGlob("templates/*")
 
-	r.GET("/", controllers.Root)
-	r.GET("/address", controllers.Address)
-	r.GET("/ip", controllers.GetIP)
-
+	api := r.Group("/api")
+	{
+		routes_handler.RegisterRoutes(api)
+	}
 	r.Run(":8000")
 }
